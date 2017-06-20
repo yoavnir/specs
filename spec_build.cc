@@ -30,44 +30,44 @@ bool append_buf(char* src, unsigned int len, unsigned int tlen, bool pad)
 			omaxptr = optr;
 		return true;
 	}
-	
+
 	memcpy(output+optr, src, len);
 	optr+=len;
 	if (omaxptr<optr)
 		omaxptr = optr;
-	
+
 	if (!pad)
 		return true;
-		
+
 	memset(output+optr, space, tlen-len);
 	optr+=(tlen-len);
 	if (omaxptr<optr)
 		omaxptr = optr;
-	
+
 	return true;
 }
 
 bool copy_buf(char* src, unsigned int len, unsigned int pos, unsigned int tlen, bool pad, unsigned char align)
 {
 	unsigned int diff;
-	
+
 	if (pos==POS_NEXT)
 		return append_buf(src, len, tlen, pad);
-		
+
 	if (pos==POS_NEXTWORD) {
 		output[optr++] = space;
 		if (omaxptr<optr)
 			omaxptr = optr;
 		return append_buf(src, len, tlen, pad);
 	}
-		
+
 	/* fill empty space before this buffer */
 	if (pos>omaxptr) {
 		memset(output+omaxptr, space, pos-omaxptr);
 		optr = omaxptr = pos;
 	}
 	else optr = pos;
-	
+
 	if (len>=tlen) {
 		diff = len-tlen;
 		if (align==ALIGN_RIGHT)
@@ -80,7 +80,7 @@ bool copy_buf(char* src, unsigned int len, unsigned int pos, unsigned int tlen, 
 			omaxptr = optr;
 		return true;
 	}
-	
+
 	if (!pad) {
 		memcpy(output+optr, src, len);
 		optr+= len;
@@ -88,7 +88,7 @@ bool copy_buf(char* src, unsigned int len, unsigned int pos, unsigned int tlen, 
 			omaxptr = optr;
 		return true;
 	}
-	
+
 	/* this is the case where we do pad */
 	diff = tlen - len;
 	if (align==ALIGN_RIGHT) {
@@ -112,12 +112,12 @@ bool copy_buf(char* src, unsigned int len, unsigned int pos, unsigned int tlen, 
 unsigned int fill_temp(char* src, unsigned int offset, unsigned int len, bool pad)
 {
 	int length_to_copy = (((int)slen) - ((int)offset));
-	
-	if (length_to_copy > 0) 
+
+	if (length_to_copy > 0)
 		memcpy(tmpsrc, src+offset, length_to_copy);
 	else
 		length_to_copy = 0;
-		
+
 	if (!pad) {
 		tmpsrc[length_to_copy] = 0;
 		return length_to_copy;
@@ -138,11 +138,16 @@ bool apply_spec_unit(spec_unit& u)
 	char			timestamp[32];
 	int				rc;
 	unsigned int	actual_last;
-	
+
 	switch (u.action) {
 		case ACTION_WRITE:
 			output[omaxptr]=0;
 			printf("%s\n", output+1);
+			optr = omaxptr = 0;
+			return true;
+		case ACTION_WRITE_ERR:
+			output[omaxptr]=0;
+			fprintf(stderr, "%s\n", output+1);
 			optr = omaxptr = 0;
 			return true;
 		case ACTION_READ:
@@ -193,7 +198,7 @@ bool apply_spec_unit(spec_unit& u)
 			return copy_buf(cstring, clen, u.pos, u.tlen, u.pad_output, u.align);
 		default:
 			return false;
-	};	
+	};
 }
 
 #define IS_WS(x)	(ws_tab[((unsigned char)(x))])
@@ -201,7 +206,7 @@ bool parse_words()
 {
 	int i;
 	char* ptr = input;
-	
+
 	for (i=1; i<=last_word_to_scan; i++)
 		word_begin[i]=-1;
 
@@ -210,7 +215,7 @@ bool parse_words()
 		ptr++;
 	if (!*ptr)
 		return false;
-		
+
 	/* Now starts the first word - let's iterate */
 	i = 1;
 	while (i<=last_word_to_scan) {
@@ -226,7 +231,7 @@ bool parse_words()
 		}
 		i++;
 	}
-	return true;	
+	return true;
 }
 
 
@@ -258,7 +263,7 @@ void specs_execute()
 	output = (char*)malloc(MAX_OUTPUT_LINE+1);
 	tmpsrc = (char*)malloc(max_src_len+10);
 	converted_string = (char*)malloc(max_src_len+10);
-	
+
 	if (last_word_to_scan) {
 		word_begin = (int*)malloc(sizeof(unsigned int)*(last_word_to_scan+1));
 		word_end = (int*)malloc(sizeof(unsigned int)*(last_word_to_scan+1));
@@ -267,14 +272,14 @@ void specs_execute()
 			return;
 		}
 	}
-	
+
 	if (!input || !output) {
 		gprintf(stderr, "%s: memory allocation failure.\n", program_name);
 		return;
 	}
-	
+
 	linecnt = 0;
-	
+
 	while (!feof(stdin)) {
 		int rc = read_a_line();
 		if (rc==READ_NOREAD)

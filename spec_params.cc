@@ -40,7 +40,7 @@ static bool	ws_init(const char *ws_str)
 		}
 		else ws_tab[ws_str[i]]=true;
 	}
-	
+
 	return true;
 }
 
@@ -49,7 +49,15 @@ bool is_write(char* arg)
 	if (0==strcasecmp(arg, "w")	|| 0==strcasecmp(arg, "write"))
 		return true;
 	else return false;
-			
+
+}
+
+bool is_stderr(char* arg)
+{
+	if (0==strcmp(arg, "STDERR"))
+		return true;
+	else return false;
+
 }
 
 bool is_read(char* arg)
@@ -57,7 +65,7 @@ bool is_read(char* arg)
 	if (0==strcasecmp(arg, "r")	|| 0==strcasecmp(arg, "read"))
 		return true;
 	else return false;
-			
+
 }
 
 bool is_redo(char* arg)
@@ -65,7 +73,7 @@ bool is_redo(char* arg)
 	if (0==strcasecmp(arg, "redo"))
 		return true;
 	else return false;
-			
+
 }
 
 #define IS_DIGIT(c)	(((c)>='0') && ((c)<='9'))
@@ -80,11 +88,11 @@ bool is_single_number(char* arg, unsigned int* first, unsigned int* last)
 		p++;
 	if (*p!=0)
 		return false;
-	
+
 	unsigned int idx = strtoul(arg, NULL, 10);
 	if (!idx)
 		return false;
-	
+
 	*first = *last = idx;
 	return true;
 }
@@ -109,22 +117,22 @@ bool is_hyphenated_range(char* arg, unsigned int* first, unsigned int* last)
 		p++;
 	if (*p!=0)
 		return false;
-		
+
 	/* OK, the format is OK. Let's try to get the first and last */
 	unsigned int _first, _last;
-	
+
 	_first = strtoul(arg, NULL, 10);
 	_last = strtoul(plast, NULL, 10);
-	
+
 	if (!_last && *plast=='x')
 		_last = 0x7fffffff;
-	
+
 	if (!_first || !_last)
 		return false;
-		
+
 	if (_last<_first)
 		return false;
-		
+
 	*first = _first;
 	if (_last==0x7fffffff)
 		*last = 0;
@@ -152,33 +160,33 @@ bool is_dotted_range(char* arg, unsigned int* first, unsigned int* len)
 		p++;
 	if (*p!=0)
 		return false;
-		
+
 	/* OK, the format is OK. Let's try to get the first and last */
 	unsigned int _first, _len;
-	
+
 	_first = strtoul(arg, NULL, 10);
 	_len = strtoul(plen, NULL, 10);
-	
+
 	if (!_first || !_len)
 		return false;
-				
+
 	*first = _first;
 	*len = _len;
 	return true;
-	
+
 }
 
 bool is_word_range(char* arg, unsigned int* first, unsigned int* last, bool* pad)
 {
 	if (arg[0]!='w' && arg[0]!='W')
 		return false;
-	
+
 	if (!is_hyphenated_range(arg+1, first, last) && !is_single_number(arg+1, first, last))
 		return false;
-		
+
 	if (*last > MAX_WORD_INDEX)
 		return false;
-	
+
 	*pad = false;
 	return true;
 }
@@ -189,57 +197,57 @@ bool is_char_range(char* arg, unsigned int* first, unsigned int* last, bool* pad
 		*pad = false;
 		return true;
 	}
-	
+
 	unsigned int len;
 	if (is_dotted_range(arg, first, &len)) {
 		*last = *first+len;
 		*pad = true;
 		return true;
 	}
-	
+
 	if (is_single_number(arg, first, last)) {
 		*pad = true;
 		return true;
 	}
-	
+
 	return false;
 }
 
 bool is_valid_tospec(char* arg, unsigned int* first, unsigned int* len, bool* pad)
 {
 	unsigned int _last;
-	
+
 	if (0==strcasecmp(arg, "n")) {
 		*len = UNLIMITED_LENGTH;
 		*first = POS_NEXT;
 		*pad = false;
 		return true;
 	}
-	
+
 	if (0==strcasecmp(arg, "nw")) {
 		*len = UNLIMITED_LENGTH;
 		*first = POS_NEXTWORD;
 		*pad = false;
 		return true;
 	}
-	
+
 	if (is_hyphenated_range(arg, first, &_last)) {
 		*len = _last - *first + 1;
 		*pad = true;
 		return true;
 	}
-	
+
 	if (is_dotted_range(arg, first, len)) {
 		*pad = true;
 		return true;
 	}
-	
+
 	if (is_single_number(arg, first, &_last)) {
 		*len = UNLIMITED_LENGTH;
 		*pad = false;
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -247,7 +255,7 @@ static int
 copy_literal(char* dst, char* src)
 {
 	int len = 0;
-	
+
 	while (*src) {
 		if (*src=='\\') {
 			src++;
@@ -273,14 +281,14 @@ copy_literal(char* dst, char* src)
 bool 	get_literal(char* arg, char** literal, unsigned int* len)
 {
 	unsigned int l = strlen(arg);
-		
+
 	if (l<=2 || arg[0]!='\'' || arg[l-1]!='\'') {
 		char* _literal = (char*)malloc(l);
 		*literal = _literal;
 		*len = copy_literal(_literal, arg);
 		return (*len>=0);
 	}
-	
+
 	arg[l-1] = 0;
 	*literal = arg+1;
 	*len = l-2;
@@ -318,7 +326,7 @@ bool	parse_arguments(int argc, char** argv)
 	if (program_name[0]=='.' && program_name[1]=='/')
 		program_name+=2;
 	unsigned int original_argc = argc;
-	
+
 	/* skip over the program name */
 	argc--;  argv++;
 
@@ -350,12 +358,16 @@ bool	parse_arguments(int argc, char** argv)
 		}
 		else no_more_switches = true;
 	}
-	
+
 	unsigned int spc_idx = 0;
 	while (argc>0) {
 		specs[spc_idx].conversion = CONVERT_NONE;
 		if (is_write(argv[0])) {
 			specs[spc_idx].action = ACTION_WRITE;
+			argc--; argv++; spc_idx++;
+		}
+		if (is_stderr(argv[0])) {
+			specs[spc_idx].action = ACTION_WRITE_ERR;
 			argc--; argv++; spc_idx++;
 		}
 		if (is_read(argv[0])) {
@@ -387,7 +399,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -411,7 +423,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -432,7 +444,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -453,7 +465,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -474,7 +486,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -495,7 +507,7 @@ bool	parse_arguments(int argc, char** argv)
 				gprintf(stderr, "%s: argument %u is an invalid to_spec.\n", program_name, original_argc-argc);
 				return false;
 			}
-			argc--; argv++; 
+			argc--; argv++;
 			if (argc>0 && is_alignment_spec(argv[0], &specs[spc_idx].align)) {
 				argc--; argv++;
 			}
@@ -506,7 +518,7 @@ bool	parse_arguments(int argc, char** argv)
 		gprintf(stderr, "%s: No specs were found\n", program_name);
 		return false;
 	}
-	
+
 	spec_unit_count = spc_idx;
 	return true;
 }

@@ -8,14 +8,14 @@ static void dump_tospec(unsigned int pos, unsigned int tlen, bool pad)
 		gprintf(stderr, " next.\n");
 		return;
 	}
-	
+
 	if (pos==POS_NEXTWORD) {
 		gprintf(stderr, " next, leaving one space.\n");
 		return;
 	}
-	
+
 	gprintf(stderr, ", onto position %u", pos);
-	
+
 	if (tlen!=UNLIMITED_LENGTH) {
 		if (pad)
 			gprintf(stderr, ", for a length of %u, padding if necessary.\n", tlen);
@@ -32,6 +32,8 @@ static void dump_specs()
 			case ACTION_WRITE:
 				gprintf(stderr, "Write\n");
 				continue;
+			case ACTION_WRITE_ERR:
+				gprintf(stderr, "Write to stderr\n");
 			case ACTION_READ:
 				gprintf(stderr, "Read\n");
 				continue;
@@ -63,8 +65,8 @@ static void dump_specs()
 int main(int argc, char** argv)
 {
 	bool	rc = parse_arguments(argc, argv);
-	
-	
+
+
 	if (rc) {
 		if (dodebugprt)
 			dump_specs();

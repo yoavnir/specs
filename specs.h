@@ -16,6 +16,7 @@ enum spec_action_t {
 	ACTION_COPY_CHARS,
 	ACTION_COPY_LITERAL,
 	ACTION_WRITE,
+	ACTION_WRITE_ERR,
 	ACTION_READ,
 	ACTION_REDO,
 	ACTION_COPY_TIMESTAMP,
@@ -30,10 +31,10 @@ enum spec_align_t {
 };
 
 #define CONVERSION(type,argstring,func)	type,
-typedef enum cnv_tp {
+typedef enum  {
 	CONVERT_NONE,
 #include "conversion.h"
-};
+} cnv_tp;
 
 struct  spec_unit {
 	spec_action_t		action;
