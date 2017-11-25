@@ -17,9 +17,11 @@ static void dump_tospec(unsigned int pos, unsigned int tlen, bool pad)
 	gprintf(stderr, ", onto position %u", pos);
 
 	if (tlen!=UNLIMITED_LENGTH) {
-		if (pad)
+		if (pad) {
 			gprintf(stderr, ", for a length of %u, padding if necessary.\n", tlen);
-		else gprintf(stderr, ", for a length of up to %u.\n", tlen);
+		} else {
+			gprintf(stderr, ", for a length of up to %u.\n", tlen);
+		}
 	} else gprintf(stderr, ".\n");
 }
 

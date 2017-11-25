@@ -286,7 +286,7 @@ bool 	get_literal(char* arg, char** literal, unsigned int* len)
 		char* _literal = (char*)malloc(l);
 		*literal = _literal;
 		*len = copy_literal(_literal, arg);
-		return (*len>=0);
+		return (*len>0);
 	}
 
 	arg[l-1] = 0;
